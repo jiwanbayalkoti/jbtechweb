@@ -29,6 +29,7 @@ Route::prefix('s/{tenant}')->group(function () {
     Route::get('/careers', [TenantPublicController::class, 'careers'])->name('tenant.public.careers');
     Route::get('/careers/{slug}', [TenantPublicController::class, 'careerShow'])->name('tenant.public.career.show');
     Route::get('/media', [TenantPublicController::class, 'media'])->name('tenant.public.media');
+    Route::get('/media/{media}', [TenantPublicController::class, 'mediaShow'])->name('tenant.public.media.show');
 });
 
 Route::get('/dashboard', function () {

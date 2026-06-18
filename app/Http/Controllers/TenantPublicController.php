@@ -4,10 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Tenant;
 use App\Models\Page;
+use App\Models\Media;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 
 class TenantPublicController extends Controller
 {
+    private const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+
     public function home(string $tenant)
     {
         $tenant = $this->resolveTenant($tenant);
@@ -193,10 +197,10 @@ class TenantPublicController extends Controller
         $tenant = $this->resolveTenant($tenant);
         if (!$tenant) abort(404);
         $website = $tenant->websites()->first();
-        $media = \App\Models\Media::where('tenant_id', $tenant->id)->latest()->paginate(24);
+        $media = $this->publicMediaItems($tenant->id, $request);
 
         if ($request->ajax() || $request->wantsJson()) {
-            $html = view('tenant-public.partials.media-items', compact('media'))->render();
+            $html = view('tenant-public.partials.media-items', compact('tenant', 'media'))->render();
             return response()->json([
                 'html' => $html,
                 'has_more' => $media->hasMorePages(),
@@ -210,11 +214,86 @@ class TenantPublicController extends Controller
         return view('tenant-public.media', compact('tenant', 'website', 'media', 'headerMenu', 'publishedPages', 'services'));
     }
 
+    public function mediaShow(string $tenant, Request $request, Media $media)
+    {
+        $tenant = $this->resolveTenant($tenant);
+        if (!$tenant || $media->tenant_id !== $tenant->id) abort(404);
+        if (!$this->isImageMedia($media)) abort(404);
+
+        $query = Media::where('tenant_id', $tenant->id);
+        if ($media->upload_group_id) {
+            $query->where('upload_group_id', $media->upload_group_id)->oldest('id');
+        } else {
+            $query->whereNull('upload_group_id')->latest();
+        }
+
+        $items = $query->get()->filter(fn (Media $item) => $this->isImageMedia($item))->values();
+        $index = $items->search(fn (Media $item) => $item->id === $media->id);
+
+        if ($index === false) abort(404);
+
+        $previous = $items->get($index - 1);
+        $next = $items->get($index + 1);
+
+        return response()->json([
+            'id' => $media->id,
+            'title' => $media->title ?: $media->file_name,
+            'description' => $media->description,
+            'url' => asset('storage/' . $media->file_path),
+            'download_url' => asset('storage/' . $media->file_path),
+            'file_name' => $media->file_name,
+            'date' => $media->created_at->format('M d, Y'),
+            'position' => $index + 1,
+            'total' => $items->count(),
+            'previous_id' => $previous?->id,
+            'next_id' => $next?->id,
+        ]);
+    }
+
     protected function resolveTenant(?string $slug): ?Tenant
     {
         if ($slug) {
             return Tenant::where('slug', $slug)->where('is_active', true)->first();
         }
         return app('tenant');
+    }
+
+    protected function publicMediaItems(int $tenantId, Request $request): LengthAwarePaginator
+    {
+        $perPage = 24;
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        $media = Media::where('tenant_id', $tenantId)->latest()->get();
+        $items = $media
+            ->groupBy(fn (Media $item) => $item->upload_group_id ?: 'media-' . $item->id)
+            ->map(function ($group) {
+                $cover = $group->first(fn (Media $item) => $this->isImageMedia($item)) ?: $group->first();
+                $isAlbum = $cover->upload_group_id && $group->count() > 1;
+
+                return (object) [
+                    'type' => $isAlbum ? 'album' : 'media',
+                    'cover' => $cover,
+                    'count' => $group->count(),
+                    'title' => $cover->title ?: ($isAlbum ? 'Album' : $cover->file_name),
+                    'description' => $cover->description,
+                    'created_at' => $group->max('created_at'),
+                    'is_image' => $this->isImageMedia($cover),
+                ];
+            })
+            ->sortByDesc('created_at')
+            ->values();
+
+        return new LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+    }
+
+    protected function isImageMedia(Media $media): bool
+    {
+        return in_array(strtolower($media->file_type), self::IMAGE_TYPES, true);
     }
 }

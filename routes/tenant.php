@@ -21,5 +21,6 @@ Route::middleware(['auth', 'tenant.admin'])->prefix('tenant')->name('tenant.')->
     Route::resource('testimonials', TestimonialController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('careers', CareerController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::post('editor/upload-image', [MediaController::class, 'uploadEditorImage'])->name('editor.upload-image');
+    Route::get('media/{medium}/preview', [MediaController::class, 'preview'])->name('media.preview');
     Route::resource('media', MediaController::class)->only(['index', 'store', 'destroy']);
 });

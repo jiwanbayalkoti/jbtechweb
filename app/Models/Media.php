@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Media extends Model
 {
     protected $fillable = [
-        'tenant_id', 'mediable_type', 'mediable_id', 'title', 'file_name', 'file_path',
+        'tenant_id', 'mediable_type', 'mediable_id', 'upload_group_id', 'title', 'description', 'file_name', 'file_path',
         'file_type', 'mime_type', 'file_size', 'alt_text', 'folder'
     ];
 
