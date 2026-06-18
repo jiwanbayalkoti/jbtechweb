@@ -13,6 +13,76 @@ class TenantPublicController extends Controller
 {
     private const IMAGE_TYPES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
 
+    public function domainHome()
+    {
+        return $this->home($this->currentTenantSlug());
+    }
+
+    public function domainPage(string $slug)
+    {
+        return $this->page($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainBlogIndex()
+    {
+        return $this->blogIndex($this->currentTenantSlug());
+    }
+
+    public function domainBlog(string $slug)
+    {
+        return $this->blog($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainServices()
+    {
+        return $this->services($this->currentTenantSlug());
+    }
+
+    public function domainServiceShow(string $slug)
+    {
+        return $this->serviceShow($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainPortfolio()
+    {
+        return $this->portfolio($this->currentTenantSlug());
+    }
+
+    public function domainPortfolioShow(string $slug)
+    {
+        return $this->portfolioShow($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainTestimonials()
+    {
+        return $this->testimonials($this->currentTenantSlug());
+    }
+
+    public function domainTestimonialShow(int $id)
+    {
+        return $this->testimonialShow($this->currentTenantSlug(), $id);
+    }
+
+    public function domainCareers()
+    {
+        return $this->careers($this->currentTenantSlug());
+    }
+
+    public function domainCareerShow(string $slug)
+    {
+        return $this->careerShow($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainMedia(Request $request)
+    {
+        return $this->media($this->currentTenantSlug(), $request);
+    }
+
+    public function domainMediaShow(Request $request, Media $media)
+    {
+        return $this->mediaShow($this->currentTenantSlug(), $request, $media);
+    }
+
     public function home(string $tenant)
     {
         $tenant = $this->resolveTenant($tenant);
@@ -259,7 +329,15 @@ class TenantPublicController extends Controller
         if ($slug) {
             return Tenant::where('slug', $slug)->where('is_active', true)->first();
         }
-        return app('tenant');
+        return app()->bound('tenant') ? app('tenant') : null;
+    }
+
+    protected function currentTenantSlug(): string
+    {
+        $tenant = $this->resolveTenant(null);
+        if (!$tenant) abort(404);
+
+        return $tenant->slug;
     }
 
     protected function publicMediaItems(int $tenantId, Request $request): LengthAwarePaginator

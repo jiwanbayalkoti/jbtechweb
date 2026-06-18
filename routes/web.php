@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+    if (app()->bound('tenant')) {
+        return app(TenantPublicController::class)->domainHome();
+    }
+
     return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 
@@ -30,6 +34,23 @@ Route::prefix('s/{tenant}')->group(function () {
     Route::get('/careers/{slug}', [TenantPublicController::class, 'careerShow'])->name('tenant.public.career.show');
     Route::get('/media', [TenantPublicController::class, 'media'])->name('tenant.public.media');
     Route::get('/media/{media}', [TenantPublicController::class, 'mediaShow'])->name('tenant.public.media.show');
+});
+
+// Tenant public website (domain/subdomain-based: e.g. jbtech.jbtech.com.np)
+Route::middleware('identify.tenant')->group(function () {
+    Route::get('/page/{slug}', [TenantPublicController::class, 'domainPage']);
+    Route::get('/blog', [TenantPublicController::class, 'domainBlogIndex']);
+    Route::get('/blog/{slug}', [TenantPublicController::class, 'domainBlog']);
+    Route::get('/services', [TenantPublicController::class, 'domainServices']);
+    Route::get('/services/{slug}', [TenantPublicController::class, 'domainServiceShow']);
+    Route::get('/portfolio', [TenantPublicController::class, 'domainPortfolio']);
+    Route::get('/portfolio/{slug}', [TenantPublicController::class, 'domainPortfolioShow']);
+    Route::get('/testimonials', [TenantPublicController::class, 'domainTestimonials']);
+    Route::get('/testimonials/{id}', [TenantPublicController::class, 'domainTestimonialShow']);
+    Route::get('/careers', [TenantPublicController::class, 'domainCareers']);
+    Route::get('/careers/{slug}', [TenantPublicController::class, 'domainCareerShow']);
+    Route::get('/media', [TenantPublicController::class, 'domainMedia']);
+    Route::get('/media/{media}', [TenantPublicController::class, 'domainMediaShow']);
 });
 
 Route::get('/dashboard', function () {
