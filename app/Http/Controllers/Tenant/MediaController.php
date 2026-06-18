@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -31,24 +32,34 @@ class MediaController extends Controller
         $files = $request->file('files');
         $tenantId = auth()->user()->tenant_id;
         $fileCount = count($files);
-        $uploadGroupId = $fileCount > 1 ? (string) Str::uuid() : null;
+        $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');
+        $hasDescriptionColumn = $this->mediaHasColumn('description');
+        $uploadGroupId = $fileCount > 1 && $hasUploadGroupColumn ? (string) Str::uuid() : null;
         $uploadTitle = $request->input('title');
         $uploadDescription = $request->input('description');
         $count = 0;
 
         foreach ($files as $file) {
             $path = $file->store('tenant/' . $tenantId, 'public');
-            Media::create([
+            $data = [
                 'tenant_id' => $tenantId,
-                'upload_group_id' => $uploadGroupId,
                 'title' => $uploadTitle,
-                'description' => $uploadDescription,
                 'file_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
                 'file_type' => $file->getClientOriginalExtension(),
                 'mime_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
-            ]);
+            ];
+
+            if ($hasUploadGroupColumn) {
+                $data['upload_group_id'] = $uploadGroupId;
+            }
+
+            if ($hasDescriptionColumn) {
+                $data['description'] = $uploadDescription;
+            }
+
+            Media::create($data);
             $count++;
         }
 
@@ -78,8 +89,9 @@ class MediaController extends Controller
         if ($medium->tenant_id !== auth()->user()->tenant_id) abort(403);
         if (!$this->isImageMedia($medium)) abort(404);
 
+        $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');
         $query = Media::where('tenant_id', auth()->user()->tenant_id);
-        if ($medium->upload_group_id) {
+        if ($hasUploadGroupColumn && $medium->upload_group_id) {
             $query->where('upload_group_id', $medium->upload_group_id)->oldest('id');
         } else {
             $query->whereKey($medium->id);
@@ -96,7 +108,7 @@ class MediaController extends Controller
         return response()->json([
             'id' => $medium->id,
             'title' => $medium->title ?: $medium->file_name,
-            'description' => $medium->description,
+            'description' => $this->mediaHasColumn('description') ? $medium->description : null,
             'url' => asset('storage/' . $medium->file_path),
             'download_url' => asset('storage/' . $medium->file_path),
             'file_name' => $medium->file_name,
@@ -122,18 +134,20 @@ class MediaController extends Controller
         $page = LengthAwarePaginator::resolveCurrentPage();
 
         $media = Media::where('tenant_id', auth()->user()->tenant_id)->latest()->get();
+        $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');
+        $hasDescriptionColumn = $this->mediaHasColumn('description');
         $items = $media
-            ->groupBy(fn (Media $item) => $item->upload_group_id ?: 'media-' . $item->id)
+            ->groupBy(fn (Media $item) => $hasUploadGroupColumn && $item->upload_group_id ? $item->upload_group_id : 'media-' . $item->id)
             ->map(function ($group) {
                 $cover = $group->first(fn (Media $item) => $this->isImageMedia($item)) ?: $group->first();
-                $isAlbum = $cover->upload_group_id && $group->count() > 1;
+                $isAlbum = $this->mediaHasColumn('upload_group_id') && $cover->upload_group_id && $group->count() > 1;
 
                 return (object) [
                     'type' => $isAlbum ? 'album' : 'media',
                     'cover' => $cover,
                     'count' => $group->count(),
                     'title' => $cover->title ?: ($isAlbum ? 'Album' : $cover->file_name),
-                    'description' => $cover->description,
+                    'description' => $this->mediaHasColumn('description') ? $cover->description : null,
                     'created_at' => $group->max('created_at'),
                     'is_image' => $this->isImageMedia($cover),
                 ];
@@ -153,5 +167,12 @@ class MediaController extends Controller
     protected function isImageMedia(Media $media): bool
     {
         return in_array(strtolower($media->file_type), self::IMAGE_TYPES, true);
+    }
+
+    protected function mediaHasColumn(string $column): bool
+    {
+        static $columns = [];
+
+        return $columns[$column] ??= Schema::hasColumn('media', $column);
     }
 }

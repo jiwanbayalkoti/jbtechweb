@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\Media;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class TenantPublicController extends Controller
 {
@@ -220,11 +221,14 @@ class TenantPublicController extends Controller
         if (!$tenant || $media->tenant_id !== $tenant->id) abort(404);
         if (!$this->isImageMedia($media)) abort(404);
 
+        $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');
         $query = Media::where('tenant_id', $tenant->id);
-        if ($media->upload_group_id) {
+        if ($hasUploadGroupColumn && $media->upload_group_id) {
             $query->where('upload_group_id', $media->upload_group_id)->oldest('id');
-        } else {
+        } elseif ($hasUploadGroupColumn) {
             $query->whereNull('upload_group_id')->latest();
+        } else {
+            $query->whereKey($media->id);
         }
 
         $items = $query->get()->filter(fn (Media $item) => $this->isImageMedia($item))->values();
@@ -238,7 +242,7 @@ class TenantPublicController extends Controller
         return response()->json([
             'id' => $media->id,
             'title' => $media->title ?: $media->file_name,
-            'description' => $media->description,
+            'description' => $this->mediaHasColumn('description') ? $media->description : null,
             'url' => asset('storage/' . $media->file_path),
             'download_url' => asset('storage/' . $media->file_path),
             'file_name' => $media->file_name,
@@ -264,18 +268,19 @@ class TenantPublicController extends Controller
         $page = LengthAwarePaginator::resolveCurrentPage();
 
         $media = Media::where('tenant_id', $tenantId)->latest()->get();
+        $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');
         $items = $media
-            ->groupBy(fn (Media $item) => $item->upload_group_id ?: 'media-' . $item->id)
+            ->groupBy(fn (Media $item) => $hasUploadGroupColumn && $item->upload_group_id ? $item->upload_group_id : 'media-' . $item->id)
             ->map(function ($group) {
                 $cover = $group->first(fn (Media $item) => $this->isImageMedia($item)) ?: $group->first();
-                $isAlbum = $cover->upload_group_id && $group->count() > 1;
+                $isAlbum = $this->mediaHasColumn('upload_group_id') && $cover->upload_group_id && $group->count() > 1;
 
                 return (object) [
                     'type' => $isAlbum ? 'album' : 'media',
                     'cover' => $cover,
                     'count' => $group->count(),
                     'title' => $cover->title ?: ($isAlbum ? 'Album' : $cover->file_name),
-                    'description' => $cover->description,
+                    'description' => $this->mediaHasColumn('description') ? $cover->description : null,
                     'created_at' => $group->max('created_at'),
                     'is_image' => $this->isImageMedia($cover),
                 ];
@@ -295,5 +300,12 @@ class TenantPublicController extends Controller
     protected function isImageMedia(Media $media): bool
     {
         return in_array(strtolower($media->file_type), self::IMAGE_TYPES, true);
+    }
+
+    protected function mediaHasColumn(string $column): bool
+    {
+        static $columns = [];
+
+        return $columns[$column] ??= Schema::hasColumn('media', $column);
     }
 }
