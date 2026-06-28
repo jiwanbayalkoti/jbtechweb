@@ -1,3 +1,15 @@
+@php
+    $serviceInvoiceMeta = $invoice->metadata['source'] ?? null;
+    $servicePlanLabel = $serviceInvoiceMeta === 'service_plan_request'
+        ? trim(($invoice->metadata['service_name'] ?? 'Service') . ' - ' . ($invoice->metadata['plan_name'] ?? 'Plan'))
+        : null;
+    $invoiceLineDescription = $invoice->subscription && $invoice->subscription->plan
+        ? $invoice->subscription->plan->name . ' - ' . ucfirst($invoice->subscription->billing_cycle ?? 'monthly') . ' subscription'
+        : ($servicePlanLabel ?: 'Subscription');
+    $billTo = $serviceInvoiceMeta === 'service_plan_request'
+        ? ($invoice->metadata['customer'] ?? [])
+        : [];
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,12 +62,22 @@
             <div class="section">
                 <div class="section-title">Bill To</div>
                 <div class="bill-to">
+                    @if($billTo)
+                    <strong>{{ $billTo['name'] ?? 'Customer' }}</strong>
+                    @if(!empty($billTo['email']))
+                        <span>{{ $billTo['email'] }}</span><br>
+                    @endif
+                    @if(!empty($billTo['phone']))
+                        <span>{{ $billTo['phone'] }}</span>
+                    @endif
+                    @else
                     <strong>{{ $invoice->tenant->name ?? '—' }}</strong>
                     @if($invoice->tenant->email)
                         <span>{{ $invoice->tenant->email }}</span><br>
                     @endif
                     @if($invoice->tenant->address)
                         <span>{{ $invoice->tenant->address }}</span>
+                    @endif
                     @endif
                 </div>
             </div>
@@ -70,6 +92,11 @@
                 <div class="section-title">Plan</div>
                 <div>{{ $invoice->subscription->plan->name }}</div>
             </div>
+            @elseif($servicePlanLabel)
+            <div class="section">
+                <div class="section-title">Service Plan</div>
+                <div>{{ $servicePlanLabel }}</div>
+            </div>
             @endif
         </div>
     </div>
@@ -83,7 +110,7 @@
         </thead>
         <tbody>
             <tr>
-                <td>{{ $invoice->subscription && $invoice->subscription->plan ? $invoice->subscription->plan->name . ' – ' . ucfirst($invoice->subscription->billing_cycle ?? 'monthly') . ' subscription' : 'Subscription' }}</td>
+                <td>{{ $invoiceLineDescription }}</td>
                 <td class="text-right">${{ number_format($invoice->amount, 2) }}</td>
             </tr>
             @if((float) $invoice->tax_amount > 0)

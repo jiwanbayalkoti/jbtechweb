@@ -59,6 +59,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'default_tenant_slug' => env('DEFAULT_TENANT_SLUG', 'jb-tech-nepal-pvt-ltd'),
+
     'asset_url' => env('ASSET_URL'),
 
     /*

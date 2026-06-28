@@ -116,7 +116,7 @@
 <body>
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('tenant.public.home', $tenant->slug) }}">
+            <a class="navbar-brand" href="{{ route('public.home') }}">
                 {{ $website->name ?? $tenant->name }}
             </a>
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
@@ -125,23 +125,23 @@
             <div class="collapse navbar-collapse" id="nav">
                 <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a>
+                        <a class="nav-link" href="{{ route('public.home') }}">Home</a>
                     </li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.blog.index', $tenant->slug) }}">Blog</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.blog.index') }}">Blog</a></li>
                     @if(isset($services) && $services->isNotEmpty())
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.services', $tenant->slug) }}">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.services') }}">Services</a></li>
                     @endif
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.portfolio', $tenant->slug) }}">Portfolio</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.testimonials', $tenant->slug) }}">Testimonials</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.careers', $tenant->slug) }}">Careers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ route('tenant.public.media', $tenant->slug) }}">Media</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.portfolio') }}">Portfolio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.testimonials') }}">Testimonials</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.careers') }}">Careers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('public.media') }}">Media</a></li>
                     @if($headerMenu ?? null)
                         @foreach($headerMenu->items as $item)
                         @php
                             $url = $item->url ?? '';
                             if ($url && !str_starts_with($url, 'http') && !str_starts_with($url, '/s/')) {
                                 $url = trim($url, '/');
-                                $url = $url ? route('tenant.public.page', [$tenant->slug, $url]) : route('tenant.public.home', $tenant->slug);
+                                $url = $url ? route('public.page', $url) : route('public.home');
                             }
                         @endphp
                         <li class="nav-item"><a class="nav-link" href="{{ $url ?: '#' }}" target="{{ $item->target ?? '_self' }}">{{ $item->title }}</a></li>

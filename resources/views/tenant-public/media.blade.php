@@ -9,7 +9,7 @@
         <div class="page-card mb-4">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
                     <li class="breadcrumb-item active">Media</li>
                 </ol>
             </nav>
@@ -21,11 +21,11 @@
         <div id="mediaGrid" class="row g-4 mb-4">
             @include('tenant-public.partials.media-items', ['media' => $media])
         </div>
-        <div id="mediaLoadMoreWrap" class="d-flex justify-content-center mb-5">
+        <div id="mediaLoadMoreWrap" class="d-flex justify-content-center mb-5" style="min-height:1px;" data-next-page="{{ $media->hasMorePages() ? 2 : '' }}" data-base-url="{{ route('public.media') }}">
             @if($media->hasMorePages())
-            <button type="button" id="mediaLoadMoreBtn" class="btn btn-primary px-4 py-2" data-next-page="2" data-base-url="{{ route('tenant.public.media', $tenant->slug) }}">
-                <i class="fas fa-plus me-2"></i> Load More
-            </button>
+            <div id="mediaLoadMoreIndicator" class="text-muted small py-3 d-none">
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span> Loading more media...
+            </div>
             @endif
         </div>
         @else
@@ -36,12 +36,12 @@
         @endif
 
         <div class="text-center">
-            <a href="{{ route('tenant.public.home', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
+            <a href="{{ route('public.home') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
         </div>
     </div>
 </main>
 
-<div class="modal fade" id="mediaPreviewModal" tabindex="-1" aria-hidden="true" data-detail-base-url="{{ url('/s/' . $tenant->slug . '/media') }}">
+<div class="modal fade" id="mediaPreviewModal" tabindex="-1" aria-hidden="true" data-detail-base-url="{{ url('/media') }}">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0" style="border-radius: 18px;">
             <div class="modal-header">
@@ -74,10 +74,14 @@
 @push('scripts')
 <script>
 (function() {
-    var btn = document.getElementById('mediaLoadMoreBtn');
     var grid = document.getElementById('mediaGrid');
     var wrap = document.getElementById('mediaLoadMoreWrap');
-    var baseUrl = btn ? btn.getAttribute('data-base-url') : null;
+    var baseUrl = wrap ? wrap.getAttribute('data-base-url') : null;
+    var loadMoreIndicator = document.getElementById('mediaLoadMoreIndicator');
+    var isLoadingMore = false;
+    var hasMoreMedia = !!(wrap && wrap.getAttribute('data-next-page'));
+    var observer = null;
+    var fallbackScrollHandler = null;
     var modalEl = document.getElementById('mediaPreviewModal');
     var previewModal = modalEl ? new bootstrap.Modal(modalEl) : null;
     var detailBaseUrl = modalEl ? modalEl.getAttribute('data-detail-base-url') : '';
@@ -90,13 +94,6 @@
     var previous = document.getElementById('mediaPreviewPrevious');
     var next = document.getElementById('mediaPreviewNext');
     var download = document.getElementById('mediaPreviewDownload');
-
-    function setButtonLoading(loading) {
-        btn.disabled = loading;
-        btn.innerHTML = loading
-            ? '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Loading...'
-            : '<i class="fas fa-plus me-2"></i> Load More';
-    }
 
     function setPreviewLoading(isLoading) {
         if (!loading || !content) return;
@@ -118,7 +115,7 @@
         })
         .then(function(data) {
             title.textContent = data.title || 'Media';
-            meta.textContent = data.position + ' of ' + data.total + ' • ' + data.date;
+            meta.textContent = data.position + ' of ' + data.total + ' - ' + data.date;
             image.src = data.url;
             image.alt = data.title || data.file_name || 'Media';
             description.textContent = data.description || '';
@@ -156,13 +153,13 @@
         });
     });
 
-    if (!btn) return;
+    function loadMoreMedia() {
+        if (!wrap || !grid || !baseUrl || isLoadingMore || !hasMoreMedia) return;
 
-    btn.addEventListener('click', function() {
-        var page = btn.getAttribute('data-next-page');
+        var page = wrap.getAttribute('data-next-page');
         if (!page) return;
-        setButtonLoading(true);
-
+        isLoadingMore = true;
+        if (loadMoreIndicator) loadMoreIndicator.classList.remove('d-none');
         fetch(baseUrl + '?page=' + page, {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
@@ -171,24 +168,57 @@
             return r.json();
         })
         .then(function(data) {
+            var appendedCount = 0;
             if (data.html && grid) {
                 var div = document.createElement('div');
                 div.innerHTML = data.html.trim();
+                appendedCount = div.children.length;
                 while (div.firstChild) grid.appendChild(div.firstChild);
             }
-            if (data.has_more === true && data.next_page) {
-                btn.setAttribute('data-next-page', data.next_page);
+
+            if (appendedCount === 0 || data.has_more !== true || !data.next_page || data.current_page >= data.last_page) {
+                stopMediaLoading();
             } else {
-                if (wrap) wrap.style.display = 'none';
+                wrap.setAttribute('data-next-page', data.next_page);
             }
         })
         .catch(function() {
             if (wrap) wrap.style.display = 'block';
         })
         .finally(function() {
-            setButtonLoading(false);
+            isLoadingMore = false;
+            if (loadMoreIndicator && hasMoreMedia) loadMoreIndicator.classList.add('d-none');
         });
-    });
+    }
+
+    function stopMediaLoading() {
+        hasMoreMedia = false;
+        if (wrap) {
+            wrap.removeAttribute('data-next-page');
+            wrap.style.display = 'none';
+        }
+        if (loadMoreIndicator) loadMoreIndicator.classList.add('d-none');
+        if (observer) observer.disconnect();
+        if (fallbackScrollHandler) window.removeEventListener('scroll', fallbackScrollHandler);
+    }
+
+    if (wrap && hasMoreMedia) {
+        if ('IntersectionObserver' in window) {
+            observer = new IntersectionObserver(function(entries) {
+                if (entries[0] && entries[0].isIntersecting) {
+                    loadMoreMedia();
+                }
+            }, { rootMargin: '250px 0px' });
+            observer.observe(wrap);
+        } else {
+            fallbackScrollHandler = function() {
+                if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
+                    loadMoreMedia();
+                }
+            };
+            window.addEventListener('scroll', fallbackScrollHandler);
+        }
+    }
 })();
 </script>
 @endpush

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Service extends Model
 {
@@ -17,5 +18,15 @@ class Service extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function plans(): HasMany
+    {
+        return $this->hasMany(ServicePlan::class)->orderBy('sort_order');
+    }
+
+    public function activePlans(): HasMany
+    {
+        return $this->plans()->where('is_active', true);
     }
 }

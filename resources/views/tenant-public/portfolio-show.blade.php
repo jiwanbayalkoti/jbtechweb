@@ -9,8 +9,8 @@
         <div class="page-card">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.portfolio', $tenant->slug) }}">Portfolio</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.portfolio') }}">Portfolio</a></li>
                     <li class="breadcrumb-item active">{{ $item->title }}</li>
                 </ol>
             </nav>
@@ -31,7 +31,7 @@
             <a href="{{ $item->project_url }}" target="_blank" rel="noopener" class="btn btn-primary mt-3"><i class="fas fa-external-link-alt me-2"></i> View Project</a>
             @endif
             <hr class="my-4">
-            <a href="{{ route('tenant.public.portfolio', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Portfolio</a>
+            <a href="{{ route('public.portfolio') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Portfolio</a>
         </div>
     </div>
 </main>

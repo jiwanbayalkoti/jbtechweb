@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Tenant;
 use App\Models\Page;
 use App\Models\Media;
+use App\Models\ContactSubmission;
+use App\Models\ServicePlan;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
@@ -41,6 +43,11 @@ class TenantPublicController extends Controller
     public function domainServiceShow(string $slug)
     {
         return $this->serviceShow($this->currentTenantSlug(), $slug);
+    }
+
+    public function domainServicePlanBuy(string $slug, Request $request)
+    {
+        return $this->servicePlanBuy($this->currentTenantSlug(), $slug, $request);
     }
 
     public function domainPortfolio()
@@ -184,11 +191,59 @@ class TenantPublicController extends Controller
         $tenant = $this->resolveTenant($tenant);
         if (!$tenant) abort(404);
         $website = $tenant->websites()->first();
-        $service = \App\Models\Service::where('tenant_id', $tenant->id)->where('slug', $slug)->where('is_active', true)->firstOrFail();
+        $service = \App\Models\Service::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->with(['activePlans' => fn ($query) => $query->orderBy('sort_order')])
+            ->firstOrFail();
         $headerMenu = \App\Models\Menu::where('tenant_id', $tenant->id)->where('location', 'header')->with('items')->first();
         $publishedPages = $website ? Page::where('website_id', $website->id)->where('is_published', true)->orderBy('sort_order')->get() : collect();
         $services = \App\Models\Service::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('sort_order')->get();
         return view('tenant-public.service-show', compact('tenant', 'website', 'service', 'headerMenu', 'publishedPages', 'services'));
+    }
+
+    public function servicePlanBuy(string $tenant, string $slug, Request $request)
+    {
+        $tenant = $this->resolveTenant($tenant);
+        if (!$tenant) abort(404);
+
+        $service = \App\Models\Service::where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'service_plan_id' => 'required|integer',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'message' => 'nullable|string',
+        ]);
+
+        $plan = ServicePlan::where('tenant_id', $tenant->id)
+            ->where('service_id', $service->id)
+            ->where('is_active', true)
+            ->findOrFail($validated['service_plan_id']);
+
+        ContactSubmission::create([
+            'tenant_id' => $tenant->id,
+            'service_plan_id' => $plan->id,
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'subject' => 'Plan inquiry: ' . $service->title . ' - ' . $plan->name,
+            'message' => trim(
+                'Service: ' . $service->title . "\n" .
+                'Plan: ' . $plan->name . "\n" .
+                'Price: ' . number_format((float) $plan->price, 2) . ' / ' . str_replace('_', ' ', $plan->billing_cycle) . "\n\n" .
+                ($validated['message'] ?? '')
+            ),
+            'ip_address' => $request->ip(),
+            'status' => 'pending',
+        ]);
+
+        return redirect()->route('public.service.show', $service->slug)
+            ->with('success', 'Thank you. We received your plan request and will contact you soon.');
     }
 
     public function portfolio(string $tenant)
@@ -275,7 +330,10 @@ class TenantPublicController extends Controller
             return response()->json([
                 'html' => $html,
                 'has_more' => $media->hasMorePages(),
-                'next_page' => $media->currentPage() + 1,
+                'next_page' => $media->hasMorePages() ? $media->currentPage() + 1 : null,
+                'current_page' => $media->currentPage(),
+                'last_page' => $media->lastPage(),
+                'item_count' => $media->count(),
             ]);
         }
 
@@ -335,6 +393,13 @@ class TenantPublicController extends Controller
     protected function currentTenantSlug(): string
     {
         $tenant = $this->resolveTenant(null);
+        if (!$tenant) {
+            $defaultSlug = config('app.default_tenant_slug');
+            $tenant = $defaultSlug
+                ? Tenant::where('slug', $defaultSlug)->where('is_active', true)->first()
+                : null;
+        }
+
         if (!$tenant) abort(404);
 
         return $tenant->slug;
@@ -343,7 +408,7 @@ class TenantPublicController extends Controller
     protected function publicMediaItems(int $tenantId, Request $request): LengthAwarePaginator
     {
         $perPage = 24;
-        $page = LengthAwarePaginator::resolveCurrentPage();
+        $page = max(1, (int) $request->query('page', 1));
 
         $media = Media::where('tenant_id', $tenantId)->latest()->get();
         $hasUploadGroupColumn = $this->mediaHasColumn('upload_group_id');

@@ -24,6 +24,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('admin.plan-requests.index') }}" class="nav-link {{ request()->routeIs('admin.plan-requests.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-envelope-open-text"></i>
+                        <p>Plan Requests</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('admin.subscriptions.index') }}" class="nav-link {{ request()->routeIs('admin.subscriptions.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-credit-card"></i>
                         <p>Subscriptions</p>

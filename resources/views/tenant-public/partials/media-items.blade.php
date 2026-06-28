@@ -4,7 +4,7 @@
 @endphp
 <div class="col-6 col-md-4 col-lg-3 media-item">
     @if($item->is_image)
-    <a href="{{ route('tenant.public.media.show', [$tenant->slug, $m->id]) }}" class="d-block text-decoration-none js-media-popup" data-media-id="{{ $m->id }}">
+    <a href="{{ route('public.media.show', $m->id) }}" class="d-block text-decoration-none js-media-popup" data-media-id="{{ $m->id }}">
         <div class="card card-custom overflow-hidden p-0" style="border-radius: 16px;">
             <div class="position-relative">
                 <img src="{{ asset('storage/' . $m->file_path) }}" alt="{{ $m->alt_text ?? $item->title }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">

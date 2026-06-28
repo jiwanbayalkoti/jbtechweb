@@ -9,7 +9,7 @@
         <div class="page-card mb-4">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
                     <li class="breadcrumb-item active">Careers</li>
                 </ol>
             </nav>
@@ -21,7 +21,7 @@
         <div class="row g-4">
             @foreach($careers as $job)
             <div class="col-12">
-                <a href="{{ route('tenant.public.career.show', [$tenant->slug, $job->slug]) }}" class="card card-custom text-decoration-none text-dark p-4 d-block">
+                <a href="{{ route('public.career.show', $job->slug) }}" class="card card-custom text-decoration-none text-dark p-4 d-block">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <h5 class="fw-bold mb-2">{{ $job->title }}</h5>
@@ -50,7 +50,7 @@
         @endif
 
         <div class="text-center mt-5">
-            <a href="{{ route('tenant.public.home', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
+            <a href="{{ route('public.home') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
         </div>
     </div>
 </main>

@@ -36,6 +36,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('tenant.plan-requests.index') }}" class="nav-link {{ request()->routeIs('tenant.plan-requests.*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-envelope-open-text"></i>
+                        <p>Plan Requests</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('tenant.portfolios.index') }}" class="nav-link {{ request()->routeIs('tenant.portfolios.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-images"></i>
                         <p>Portfolio</p>

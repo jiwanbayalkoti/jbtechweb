@@ -9,8 +9,8 @@
         <div class="page-card">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.blog.index', $tenant->slug) }}">Blog</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.blog.index') }}">Blog</a></li>
                     <li class="breadcrumb-item active">{{ $post->title }}</li>
                 </ol>
             </nav>
@@ -26,7 +26,7 @@
                 <div class="content">{!! $post->content !!}</div>
             </article>
             <hr class="my-4">
-            <a href="{{ route('tenant.public.blog.index', $tenant->slug) }}" class="btn btn-primary">
+            <a href="{{ route('public.blog.index') }}" class="btn btn-primary">
                 <i class="fas fa-arrow-left me-2"></i> Back
             </a>
         </div>

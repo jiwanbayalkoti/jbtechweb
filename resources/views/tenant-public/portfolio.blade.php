@@ -9,7 +9,7 @@
         <div class="page-card mb-4">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
                     <li class="breadcrumb-item active">Portfolio</li>
                 </ol>
             </nav>
@@ -21,7 +21,7 @@
         <div class="row g-4">
             @foreach($portfolios as $item)
             <div class="col-md-6 col-lg-4">
-                <a href="{{ route('tenant.public.portfolio.show', [$tenant->slug, $item->slug]) }}" class="card card-custom text-decoration-none text-dark overflow-hidden h-100">
+                <a href="{{ route('public.portfolio.show', $item->slug) }}" class="card card-custom text-decoration-none text-dark overflow-hidden h-100">
                     @if($item->image)
                     <img src="{{ asset('storage/' . $item->image) }}" class="card-img-top" alt="{{ $item->title }}" style="height: 200px; object-fit: cover;">
                     @else
@@ -46,7 +46,7 @@
         @endif
 
         <div class="text-center mt-5">
-            <a href="{{ route('tenant.public.home', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
+            <a href="{{ route('public.home') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
         </div>
     </div>
 </main>

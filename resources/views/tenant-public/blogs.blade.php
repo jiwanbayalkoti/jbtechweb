@@ -14,7 +14,7 @@
             <div class="row g-4">
                 @foreach($blogs as $post)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('tenant.public.blog', [$tenant->slug, $post->slug]) }}" class="card card-custom text-decoration-none text-dark h-100 overflow-hidden">
+                    <a href="{{ route('public.blog', $post->slug) }}" class="card card-custom text-decoration-none text-dark h-100 overflow-hidden">
                         <div class="card-body">
                             <h5 class="fw-bold mb-2">{{ $post->title }}</h5>
                             <div class="content content-excerpt small text-muted mb-3">

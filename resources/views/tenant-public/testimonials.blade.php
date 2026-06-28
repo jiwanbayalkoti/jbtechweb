@@ -9,7 +9,7 @@
         <div class="page-card mb-4">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
                     <li class="breadcrumb-item active">Testimonials</li>
                 </ol>
             </nav>
@@ -21,7 +21,7 @@
         <div class="row g-4">
             @foreach($testimonials as $t)
             <div class="col-md-6 col-lg-4">
-                <a href="{{ route('tenant.public.testimonial.show', [$tenant->slug, $t->id]) }}" class="card card-custom p-4 h-100 text-decoration-none text-dark d-block">
+                <a href="{{ route('public.testimonial.show', $t->id) }}" class="card card-custom p-4 h-100 text-decoration-none text-dark d-block">
                     @if(($t->rating ?? 0) > 0)
                     <div class="text-warning mb-3">
                         @for($i = 1; $i <= 5; $i++) <i class="fas fa-star{{ $i <= $t->rating ? '' : '-o' }}"></i> @endfor
@@ -56,7 +56,7 @@
         @endif
 
         <div class="text-center mt-5">
-            <a href="{{ route('tenant.public.home', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
+            <a href="{{ route('public.home') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Home</a>
         </div>
     </div>
 </main>

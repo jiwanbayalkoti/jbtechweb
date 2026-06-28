@@ -9,8 +9,8 @@
         <div class="page-card">
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.home', $tenant->slug) }}">Home</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('tenant.public.careers', $tenant->slug) }}">Careers</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.home') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('public.careers') }}">Careers</a></li>
                     <li class="breadcrumb-item active">{{ $job->title }}</li>
                 </ol>
             </nav>
@@ -33,7 +33,7 @@
                 @endif
             </div>
             <hr class="my-4">
-            <a href="{{ route('tenant.public.careers', $tenant->slug) }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Careers</a>
+            <a href="{{ route('public.careers') }}" class="btn btn-primary"><i class="fas fa-arrow-left me-2"></i> Back to Careers</a>
         </div>
     </div>
 </main>

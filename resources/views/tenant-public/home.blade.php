@@ -265,7 +265,7 @@
                 <p class="lead mb-4">{{ $website->tagline }}</p>
                 @endif
                 @if(($services ?? collect())->isNotEmpty())
-                <a href="{{ route('tenant.public.services', $tenant->slug) }}" class="btn btn-outline-primary-home">Our Services</a>
+                <a href="{{ route('public.services') }}" class="btn btn-outline-primary-home">Our Services</a>
                 @endif
             </div>
         </div>
@@ -283,7 +283,7 @@
             <div class="row g-4 mb-5">
                 @foreach($services as $s)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('tenant.public.services', $tenant->slug) }}" class="text-decoration-none text-dark">
+                    <a href="{{ route('public.services') }}" class="text-decoration-none text-dark">
                         <div class="home-service-card">
                             <div class="home-service-icon">
                                 @if($s->icon)<i class="{{ $s->icon }}"></i>@else<i class="fas fa-cog"></i>@endif
@@ -296,7 +296,7 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('tenant.public.services', $tenant->slug) }}" class="btn btn-primary px-4 py-2">View All Services</a>
+                <a href="{{ route('public.services') }}" class="btn btn-primary px-4 py-2">View All Services</a>
             </div>
         </div>
     </section>
@@ -310,7 +310,7 @@
             <div class="row g-4 mb-5">
                 @foreach($blogs as $post)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('tenant.public.blog', [$tenant->slug, $post->slug]) }}" class="home-blog-card">
+                    <a href="{{ route('public.blog', $post->slug) }}" class="home-blog-card">
                         <div class="img-wrap">
                             <i class="fas fa-newspaper"></i>
                         </div>
@@ -324,7 +324,7 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('tenant.public.blog.index', $tenant->slug) }}" class="btn btn-primary px-4 py-2">View All Posts</a>
+                <a href="{{ route('public.blog.index') }}" class="btn btn-primary px-4 py-2">View All Posts</a>
             </div>
         </div>
     </section>
@@ -338,7 +338,7 @@
             <div class="row g-4 mb-5">
                 @foreach($portfolios as $item)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('tenant.public.portfolio.show', [$tenant->slug, $item->slug]) }}" class="home-portfolio-card">
+                    <a href="{{ route('public.portfolio.show', $item->slug) }}" class="home-portfolio-card">
                         <div class="img-wrap">
                             @if($item->image)
                             <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->title }}">
@@ -355,7 +355,7 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('tenant.public.portfolio', $tenant->slug) }}" class="btn btn-primary px-4 py-2">View All Portfolio</a>
+                <a href="{{ route('public.portfolio') }}" class="btn btn-primary px-4 py-2">View All Portfolio</a>
             </div>
         </div>
     </section>
@@ -392,7 +392,7 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('tenant.public.testimonials', $tenant->slug) }}" class="btn btn-primary px-4 py-2">All Testimonials</a>
+                <a href="{{ route('public.testimonials') }}" class="btn btn-primary px-4 py-2">All Testimonials</a>
             </div>
         </div>
     </section>
@@ -406,7 +406,7 @@
             <div class="row g-3 mb-4">
                 @foreach($careers as $job)
                 <div class="col-12">
-                    <a href="{{ route('tenant.public.career.show', [$tenant->slug, $job->slug]) }}" class="home-career-row">
+                    <a href="{{ route('public.career.show', $job->slug) }}" class="home-career-row">
                         <div>
                             <h6 class="fw-bold mb-1" style="color: #0f172a;">{{ $job->title }}</h6>
                             <small class="text-muted">{{ $job->department ?? '' }}{{ $job->department && $job->location ? ' · ' : '' }}{{ $job->location ?? '' }}</small>
@@ -417,7 +417,7 @@
                 @endforeach
             </div>
             <div class="text-center">
-                <a href="{{ route('tenant.public.careers', $tenant->slug) }}" class="btn btn-primary px-4 py-2">All Open Positions</a>
+                <a href="{{ route('public.careers') }}" class="btn btn-primary px-4 py-2">All Open Positions</a>
             </div>
         </div>
     </section>
@@ -431,7 +431,7 @@
             <div class="row g-3">
                 @foreach($publishedPages->take(3) as $p)
                 <div class="col-md-6 col-lg-4">
-                    <a href="{{ route('tenant.public.page', [$tenant->slug, $p->slug]) }}" class="home-explore-link">
+                    <a href="{{ route('public.page', $p->slug) }}" class="home-explore-link">
                         <div class="icon-wrap"><i class="fas fa-file-alt"></i></div>
                         <div>
                             <h6 class="fw-bold mb-0" style="color: #0f172a;">{{ $p->title }}</h6>
