@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ContactSubmission extends Model
 {
     protected $fillable = [
-        'tenant_id', 'service_plan_id', 'invoice_id', 'name', 'email', 'phone',
-        'subject', 'message', 'ip_address', 'status', 'approved_at',
+        'tenant_id', 'service_plan_id', 'invoice_id', 'public_token',
+        'name', 'email', 'phone', 'subject', 'message', 'ip_address', 'status', 'approved_at',
         'email_sent_at', 'is_read'
     ];
 

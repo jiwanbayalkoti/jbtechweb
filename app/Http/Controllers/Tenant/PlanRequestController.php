@@ -37,6 +37,10 @@ class PlanRequestController extends Controller
     {
         $this->authorizePlanRequest($planRequest);
 
+        if (!$planRequest->is_read) {
+            $planRequest->update(['is_read' => true]);
+        }
+
         $planRequest->load(['servicePlan.service', 'invoice']);
 
         return view('tenant.plan-requests.show', compact('planRequest'));

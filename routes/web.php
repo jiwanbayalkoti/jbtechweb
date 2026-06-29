@@ -32,6 +32,7 @@ Route::middleware('identify.tenant')->group(function () {
     Route::get('/service', [TenantPublicController::class, 'domainServices'])->name('public.services');
     Route::get('/service/{slug}', [TenantPublicController::class, 'domainServiceShow'])->name('public.service.show');
     Route::post('/service/{slug}/buy', [TenantPublicController::class, 'domainServicePlanBuy'])->name('public.service.buy');
+    Route::get('/plan-request/{token}/invoice', [TenantPublicController::class, 'planRequestInvoice'])->name('public.plan-request.invoice');
     Route::redirect('/services', '/service');
     Route::get('/portfolio', [TenantPublicController::class, 'domainPortfolio'])->name('public.portfolio');
     Route::get('/portfolio/{slug}', [TenantPublicController::class, 'domainPortfolioShow'])->name('public.portfolio.show');
@@ -54,6 +55,7 @@ Route::prefix('s/{tenant}')->group(function () {
     Route::get('/services', [TenantPublicController::class, 'services'])->name('tenant.public.services');
     Route::get('/services/{slug}', [TenantPublicController::class, 'serviceShow'])->name('tenant.public.service.show');
     Route::post('/services/{slug}/buy', [TenantPublicController::class, 'servicePlanBuy'])->name('tenant.public.service.buy');
+    Route::get('/plan-request/{token}/invoice', [TenantPublicController::class, 'planRequestInvoice'])->name('tenant.public.plan-request.invoice');
     Route::get('/portfolio', [TenantPublicController::class, 'portfolio'])->name('tenant.public.portfolio');
     Route::get('/portfolio/{slug}', [TenantPublicController::class, 'portfolioShow'])->name('tenant.public.portfolio.show');
     Route::get('/testimonials', [TenantPublicController::class, 'testimonials'])->name('tenant.public.testimonials');

@@ -47,16 +47,17 @@
                             @endforeach
                         </ul>
                         @endif
-                        <a href="#buyPlanForm" class="btn btn-primary mt-auto" onclick="document.getElementById('service_plan_id').value=@json($plan->id); document.getElementById('selectedPlanName').textContent=@json($plan->name);">
+                        <button type="button" class="btn btn-primary mt-auto js-select-service-plan" data-plan-id="{{ $plan->id }}" data-plan-name="{{ $plan->name }}">
                             Subscribe / Buy Plan
-                        </a>
+                        </button>
                     </div>
                 </div>
                 @endforeach
             </div>
 
             <div class="card card-custom p-4" id="buyPlanForm">
-                <h4 class="fw-bold mb-2">Request Plan</h4>
+                <h4 class="fw-bold mb-2">Buy / Subscribe Plan</h4>
+                <div class="alert alert-info d-none" id="planSelectedAlert"></div>
                 <p class="text-muted small">Selected plan: <span id="selectedPlanName">{{ $service->activePlans->first()->name }}</span></p>
                 <form method="POST" action="{{ route('public.service.buy', $service->slug) }}">
                     @csrf
@@ -86,7 +87,7 @@
                         @endforeach
                     </div>
                     @endif
-                    <button type="submit" class="btn btn-primary mt-3">Submit Request</button>
+                    <button type="submit" class="btn btn-primary mt-3">Submit</button>
                 </form>
             </div>
             @endif
@@ -97,3 +98,54 @@
     </div>
 </main>
 @endsection
+
+@push('scripts')
+<script>
+function selectServicePlan(planId, planName, clickedButton) {
+    var formCard = document.getElementById('buyPlanForm');
+    var planInput = document.getElementById('service_plan_id');
+    var planLabel = document.getElementById('selectedPlanName');
+    var alertBox = document.getElementById('planSelectedAlert');
+    var nameInput = formCard ? formCard.querySelector('input[name="name"]') : null;
+
+    if (!formCard || !planInput || !planLabel) return;
+
+    planInput.value = planId;
+    planLabel.textContent = planName;
+
+    if (alertBox) {
+        alertBox.textContent = planName + ' selected. Please fill your details to create invoice.';
+        alertBox.classList.remove('d-none');
+    }
+
+    formCard.classList.add('border', 'border-primary');
+    setTimeout(function() {
+        formCard.classList.remove('border', 'border-primary');
+    }, 1800);
+
+    if (clickedButton) {
+        var originalText = clickedButton.textContent;
+        clickedButton.textContent = 'Selected - Fill Form';
+        setTimeout(function() {
+            clickedButton.textContent = originalText;
+        }, 1500);
+    }
+
+    formCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (nameInput) {
+        setTimeout(function() {
+            nameInput.focus();
+        }, 500);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.js-select-service-plan').forEach(function(button) {
+        button.addEventListener('click', function() {
+            selectServicePlan(this.dataset.planId, this.dataset.planName, this);
+        });
+    });
+});
+</script>
+@endpush

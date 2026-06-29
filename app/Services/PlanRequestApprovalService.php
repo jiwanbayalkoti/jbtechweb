@@ -10,9 +10,9 @@ use RuntimeException;
 
 class PlanRequestApprovalService
 {
-    public function approve(ContactSubmission $planRequest): Invoice
+    public function approve(ContactSubmission $planRequest, bool $markAsRead = true): Invoice
     {
-        return DB::transaction(function () use ($planRequest) {
+        return DB::transaction(function () use ($planRequest, $markAsRead) {
             $planRequest->refresh();
 
             if ($planRequest->invoice_id && $planRequest->invoice) {
@@ -55,7 +55,7 @@ class PlanRequestApprovalService
                 'invoice_id' => $invoice->id,
                 'status' => 'approved',
                 'approved_at' => now(),
-                'is_read' => true,
+                'is_read' => $markAsRead,
             ]);
 
             return $invoice;

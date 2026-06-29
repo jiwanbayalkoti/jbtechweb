@@ -62,6 +62,14 @@
             </tbody>
         </table>
 
+        @if($planRequest->public_token)
+        <p>
+            <a href="{{ route('public.plan-request.invoice', $planRequest->public_token) }}" style="display: inline-block; background: #6366f1; color: #ffffff; padding: 10px 16px; border-radius: 6px; text-decoration: none;">
+                View Invoice Details
+            </a>
+        </p>
+        @endif
+
         @if($planRequest->message)
         <p><strong>Your message:</strong></p>
         <p style="background: #f9fafb; padding: 12px; border-left: 4px solid #6366f1;">

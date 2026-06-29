@@ -38,7 +38,12 @@
                 <li class="nav-item">
                     <a href="{{ route('tenant.plan-requests.index') }}" class="nav-link {{ request()->routeIs('tenant.plan-requests.*') ? 'active' : '' }}">
                         <i class="nav-icon fas fa-envelope-open-text"></i>
-                        <p>Plan Requests</p>
+                        <p>
+                            Plan Requests
+                            @if(($planRequestUnreadCount ?? 0) > 0)
+                            <span class="right badge badge-danger">{{ $planRequestUnreadCount > 99 ? '99+' : $planRequestUnreadCount }}</span>
+                            @endif
+                        </p>
                     </a>
                 </li>
                 <li class="nav-item">

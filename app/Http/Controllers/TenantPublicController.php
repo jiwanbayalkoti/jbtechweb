@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PlanRequestInvoiceMail;
 use App\Models\Tenant;
 use App\Models\Page;
 use App\Models\Media;
 use App\Models\ContactSubmission;
 use App\Models\ServicePlan;
+use App\Services\PlanRequestApprovalService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Throwable;
 
 class TenantPublicController extends Controller
 {
@@ -225,9 +230,10 @@ class TenantPublicController extends Controller
             ->where('is_active', true)
             ->findOrFail($validated['service_plan_id']);
 
-        ContactSubmission::create([
+        $planRequest = ContactSubmission::create([
             'tenant_id' => $tenant->id,
             'service_plan_id' => $plan->id,
+            'public_token' => $this->newPublicToken(),
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
@@ -242,8 +248,38 @@ class TenantPublicController extends Controller
             'status' => 'pending',
         ]);
 
-        return redirect()->route('public.service.show', $service->slug)
-            ->with('success', 'Thank you. We received your plan request and will contact you soon.');
+        app(PlanRequestApprovalService::class)->approve($planRequest, markAsRead: false);
+        $planRequest->refresh()->load(['tenant', 'servicePlan.service', 'invoice']);
+
+        try {
+            Mail::to($planRequest->email)->send(new PlanRequestInvoiceMail($planRequest));
+            $planRequest->update(['email_sent_at' => now()]);
+        } catch (Throwable) {
+            // SMTP issues should not block customers from seeing their invoice.
+        }
+
+        $invoiceUrl = $request->routeIs('tenant.public.*')
+            ? route('tenant.public.plan-request.invoice', [$tenant->slug, $planRequest->public_token])
+            : route('public.plan-request.invoice', $planRequest->public_token);
+
+        return redirect($invoiceUrl)
+            ->with('success', 'Your invoice has been created. Please review the details below.');
+    }
+
+    public function planRequestInvoice(string $token)
+    {
+        $planRequest = ContactSubmission::with(['tenant', 'servicePlan.service', 'invoice'])
+            ->where('public_token', $token)
+            ->where('subject', 'like', 'Plan inquiry:%')
+            ->firstOrFail();
+
+        $tenant = $planRequest->tenant;
+        $website = $tenant->websites()->first();
+        $headerMenu = \App\Models\Menu::where('tenant_id', $tenant->id)->where('location', 'header')->with('items')->first();
+        $publishedPages = $website ? Page::where('website_id', $website->id)->where('is_published', true)->orderBy('sort_order')->get() : collect();
+        $services = \App\Models\Service::where('tenant_id', $tenant->id)->where('is_active', true)->orderBy('sort_order')->get();
+
+        return view('tenant-public.plan-request-invoice', compact('tenant', 'website', 'planRequest', 'headerMenu', 'publishedPages', 'services'));
     }
 
     public function portfolio(string $tenant)
@@ -403,6 +439,15 @@ class TenantPublicController extends Controller
         if (!$tenant) abort(404);
 
         return $tenant->slug;
+    }
+
+    protected function newPublicToken(): string
+    {
+        do {
+            $token = Str::random(48);
+        } while (ContactSubmission::where('public_token', $token)->exists());
+
+        return $token;
     }
 
     protected function publicMediaItems(int $tenantId, Request $request): LengthAwarePaginator

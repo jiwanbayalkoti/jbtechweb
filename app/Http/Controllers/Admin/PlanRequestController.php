@@ -35,6 +35,10 @@ class PlanRequestController extends Controller
     {
         abort_unless(str_starts_with((string) $planRequest->subject, 'Plan inquiry:'), 404);
 
+        if (!$planRequest->is_read) {
+            $planRequest->update(['is_read' => true]);
+        }
+
         $planRequest->load(['tenant', 'servicePlan.service', 'invoice']);
 
         return view('admin.plan-requests.show', compact('planRequest'));
