@@ -70,6 +70,7 @@ function deleteItem(url, t) {
 }
 
 var servicePlanBaseUrl = '';
+var servicePlansById = {};
 
 function openPlanModal(serviceTitle, plans, storeUrl, baseUrl) {
     servicePlanBaseUrl = baseUrl;
@@ -83,6 +84,7 @@ function openPlanModal(serviceTitle, plans, storeUrl, baseUrl) {
 function renderPlans(plans) {
     var tbody = $('#servicePlanTable tbody');
     tbody.empty();
+    servicePlansById = {};
 
     if (!plans.length) {
         tbody.append('<tr><td colspan="5" class="text-center text-muted">No plans yet</td></tr>');
@@ -90,6 +92,8 @@ function renderPlans(plans) {
     }
 
     plans.forEach(function(plan) {
+        servicePlansById[plan.id] = plan;
+        var encodedPlan = encodeURIComponent(JSON.stringify(plan));
         var features = Array.isArray(plan.features) ? plan.features.join('\n') : '';
         var status = plan.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-secondary">Inactive</span>';
         tbody.append(
@@ -99,16 +103,17 @@ function renderPlans(plans) {
                 '<td>' + escapeHtml((plan.billing_cycle || '').replace("_", " ")) + '</td>' +
                 '<td>' + status + '</td>' +
                 '<td>' +
-                    '<button type="button" class="btn btn-xs btn-info mr-1" onclick="editServicePlan(' + JSON.stringify(encodeURIComponent(JSON.stringify(plan))) + ', ' + JSON.stringify(features) + ')"><i class="fas fa-edit"></i></button>' +
-                    '<button type="button" class="btn btn-xs btn-danger" onclick="deleteServicePlan(' + plan.id + ', ' + JSON.stringify(plan.name) + ')"><i class="fas fa-trash"></i></button>' +
+                    '<button type="button" class="btn btn-xs btn-info mr-1 js-edit-service-plan" data-plan="' + encodedPlan + '"><i class="fas fa-edit"></i></button>' +
+                    '<button type="button" class="btn btn-xs btn-danger js-delete-service-plan" data-plan-id="' + plan.id + '"><i class="fas fa-trash"></i></button>' +
                 '</td>' +
             '</tr>'
         );
     });
 }
 
-function editServicePlan(encodedPlan, features) {
+function editServicePlan(encodedPlan) {
     var plan = JSON.parse(decodeURIComponent(encodedPlan));
+    var features = Array.isArray(plan.features) ? plan.features.join('\n') : '';
     $('#servicePlanForm').attr('action', servicePlanBaseUrl + '/' + plan.id);
     if (!$('#servicePlanForm input[name="_method"]').length) $('#servicePlanForm').append('<input type="hidden" name="_method" value="PUT">');
     $('#servicePlanForm input[name="name"]').val(plan.name);
@@ -131,6 +136,16 @@ function deleteServicePlan(planId, name) {
         });
     }});
 }
+
+$(document).on('click', '.js-edit-service-plan', function() {
+    editServicePlan($(this).attr('data-plan'));
+});
+
+$(document).on('click', '.js-delete-service-plan', function() {
+    var planId = $(this).attr('data-plan-id');
+    var plan = servicePlansById[planId] || {};
+    deleteServicePlan(planId, plan.name || 'this plan');
+});
 
 function escapeHtml(value) {
     return $('<div>').text(value || '').html();
